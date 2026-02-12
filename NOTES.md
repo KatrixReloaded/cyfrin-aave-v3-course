@@ -40,7 +40,7 @@ $$
   {Supply\ IR} = {0.07}\times{0.5}\times{(1 - 0.02)} = 0.0343 = 3.43\%  
 $$
   
-Each reserve has **aTokenAddress** and **variableDebtTokenAddress**  
+Each reserve has `aTokenAddress` and `variableDebtTokenAddress`  
 - aTokens are the tokens you receive when you supply tokens to the reserve  
 - variableDebtTokens are tokens that you receive when you borrow tokens from the reserve  
 Both tokens are rebase tokens, their balances change even if you don't do anything. aTokens increase as you receive interest, debt tokens increase as the amount of interest you have to repay increases.  
@@ -66,3 +66,16 @@ $$
   \\
   {calculateDebtWithInterest}\ =\ \frac{{Debt}\times{R(m)}}{1e18}
 $$  
+  
+### Linear Interest Rate on Supply  
+Assume user deposits 100 tokens at `time=0`, the interest stays the same at time 1 and 2, so the interest grows linearly, the interest updates at 3 and stays the same through 4 and user withdraws at 5. So the formula looks something like:  
+$$
+  100(1\ +\ r_1\ +\ r_2)(1\ +\ r_3\ +\ r_4)
+  \\
+  =\ 100(1\ +\ s_1)(1\ +\ s_2)\ =\ 100\frac{S(2)}{S(0)}
+$$
+Looks a lot like the equation for debt. We just need to modify the rate accumulator function to multiply the sum of the linear interests instead of multiplying the rate per second like we do in debt  
+$$
+  {S(n)} = \prod_{i=0}^{n} (1 + s_i)
+$$
+Each of s<sub>i</sub> here is the cumulation of the linear interests between updates  
