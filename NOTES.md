@@ -13,7 +13,7 @@ $$
   APY = (1 + R)^{N} - 1  
 $$
 - Max LTV: LTV stands for Loan-To-Value. It's the max percentage of the lent token's value that you can borrow. For example if Max LTV is 63%, and you lent 100 DAI, you can borrow upto 63 dollars worth of assets.  
-- Liquidation Threshold: Percentage at which your collateral can be liquidated.  
+- Liquidation Threshold: Percentage at which your collateral can be liquidated. This value is always less than 1 (assuming max LTV is between 0 and 1) and is always greater than the max LTV.  
 - Liquidation Penalty: The penalty that is paid from your collateral if your collateral is liquidated.  
 - Reserve Factor: Basically a percentage of the interest you've paid will go to the protocol.  
 - Isolation Mode: If a user deposits an isolated asset as collateral, they cannot deposit any other asset as collateral (but they can deposit to generate yield). Also, the user can only borrow some of the assets approved by Aave Governance for that isolated asset.  
@@ -52,7 +52,7 @@ $$
   \\
   {R(n)} = \prod_{i=0}^{n} (1 + r_i)
   \\
-  {Debt} = x \frac{\prod_{i=0}^{n-1} (1 + r_i)}{\prod_{i=0}^{k-1} (1 + r_i)} = \frac{R(n-1)}{R(k-1)}
+  {Debt} = x \frac{\prod_{i=0}^{n-1} (1 + r_i)}{\prod_{i=0}^{k-1} (1 + r_i)} = x\frac{R(n-1)}{R(k-1)}
 $$
 So if user doesn't repay at `n` and borrows more at `l` till `m`, to handle that scenario in a contract efficiently, we do:  
 $$
@@ -79,3 +79,45 @@ $$
   {S(n)} = \prod_{i=0}^{n} (1 + s_i)
 $$
 Each of s<sub>i</sub> here is the cumulation of the linear interests between updates  
+  
+### Compound Interest Approximation on Debt  
+Here, `x` is the last updated interest rate, `n` is the number of seconds since the last update  
+$$
+  (1+x)^n = (1+x)(1+x)...(1+x)
+$$
+Calculating compound interest like this gets more expensive as `n` gets larger. Aave V3 uses binomial expansion to calculate this  
+$$
+  (x+y)^n = \sum_{k=0}^{n}\binom{n}{k}x^k y^{n-k}
+$$
+$$
+  \binom{n}{k} = \frac{n!}{k!(n-k)!}
+$$
+Expand the summation, replace `y` with `1`, reduce the equation to just the first 4 terms for a decent approximation  
+$$
+  (x+y)^n = 1\ +\ nx\ +\ \frac{n(n-1)}{2}x^2\ +\ \frac{n(n-1)(n-2)}{6}x^3
+$$
+
+> Note: Need to look into the math behind this more  
+  
+### Health Factor  
+$$
+  Health\ factor\ <\ 1\ =>\ collateral\ can\ be\ liquidated
+$$
+**Average liquidation threshold**  
+C<sub>R</sub>(u) = USD value of collateral locked in reserve `R` by user `u`  
+B<sub>R</sub>(u) = Debt in USD from reserve `R` by user `u`  
+L<sub>R</sub> = Liquidation threshold of reserve `R`  
+L(u) = Average liquidation threshold for user `u`
+$$
+  L(u)\ =\ \frac{\sum_R L_R C_R(u)}{\sum_R C_R(u)}
+$$
+It is the sum of all liquidation threshold values of user `u` divided by the total collateral value of the user  
+  
+H(u) = Health factor of user `u`  
+$$
+  H(u)\ =\ L(u)\frac{\sum_RC_R(u)}{\sum_RB_R(u)}
+$$
+$$
+  Liquidation\ if\ H(u)<1
+$$
+> Note: Why not just do summation of all liquidation thresholds divided by the summation of all borrows directly?  
