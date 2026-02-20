@@ -121,3 +121,37 @@ $$
   Liquidation\ if\ H(u)<1
 $$
 > Note: Why not just do summation of all liquidation thresholds divided by the summation of all borrows directly?  
+  
+### Repay  
+In the function `repay()`, we specify the amount we want to repay. However, our debt is variable and keeps changing with time. So, to ensure that we can repay the full amount, Aave checks the following:  
+```solidity
+uint256 paybackAmount = variableDebt;
+if(params.amount < paybackAmount) {
+    paybackAmount = amount;
+}
+```
+  
+### Withdraw  
+Similar to `repay()`, `withdraw()` is for a rebase token as well. To get your entire amount out, Aave has the following check:  
+```solidity
+uint256 amountToWithdraw = params.amount;
+if(amountToWithdraw == type(uint256).max) {
+    amountToWithdraw = user.balance;
+}
+```
+  
+### Liquidation  
+Collaterals that back up undercollateralized loans can be liquidated. Liquidation means that the collateral is given to whoever pays the debt.  
+**Close Factor**  
+The amount of collateral to be liquidated is calculated by the close factor. Close factor is the maximum percentage of debt that can be paid during liquidation.  
+```
+Max debt to repay = Default -> 100% of debt  
+                    Other condition -> 50% of user's total debt  
+```
+**Other condition:**  
+Requirements:  
+`Collateral to liquidate & debt to repay > MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD (currently set to $2000)`  
+Both of the two values in USD should be greater than the set threshold constant  
+
+`Health factor > CLOSE_FACTOR_HF_THRESHOLD (0.95)`  
+`Debt to repay > user's total debt x DEFAULT_LIQUIDATION_CLOSE_FACTOR (50%)`  
