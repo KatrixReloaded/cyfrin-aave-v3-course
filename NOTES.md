@@ -155,3 +155,20 @@ Both of the two values in USD should be greater than the set threshold constant
 
 `Health factor > CLOSE_FACTOR_HF_THRESHOLD (0.95)`  
 `Debt to repay > user's total debt x DEFAULT_LIQUIDATION_CLOSE_FACTOR (50%)`  
+  
+**How much collateral to liquidate?**  
+`Debt to cover x Debt Price = Collateral to liquidate x Collateral Price`  
+Inside Aave, the debt multiplication is divided by the collateral price to calculate the collateral to liquidate  
+**Liquidation Bonus and Protocol Fee**  
+Suppose 1 ETH is the amount to be liquidated and the liquidation bonus is 5%. Then, the liquidator receives 1.05 ETH - protocol fee. The protocol fee is a small fraction of the liquidation bonus.  
+If I fully liquidate the user, suppose he has 1 ETH as collateral and I try to liquidate it entirely, the amount to be paid out would become 1.05 ETH. However, the user didn't put that much up as collateral. So, in this case, the collateral to be liquidated will be reduced to adjust the liquidation bonus and the protocol fee.   
+  
+## Using Aave V3 (App)    
+### Long Leverage  
+Initial cash used to buy asset. Use asset as collateral, borrow cash. Use borrowed cash to buy asset. Now you have a ~2x leverage.  
+  
+### Short Selling  
+Use cash to borrow asset. Sell asset. Buy asset at lower price. Repay asset. Difference is profit.  
+  
+### Flash Leverage and Max Leverage  
+Covered in Rocket Pool rETH course  
